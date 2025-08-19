@@ -1,24 +1,21 @@
 class PostsController < ApplicationController
-  before_action :authenticate_user!
-
+  before_action :authenticate_user!, except: [ :index ]
   def index
-    @posts = Post.all
-  end
-
-  def show
-    @post = Post.find(params[:id])
+    @posts = Post.includes(:user).order(created_at: :desc)  # fetch all posts with user info
   end
 
   def new
-    @post = current_user.posts.build
+    @post = Post.new
   end
 
   def create
-    @post = current_user.posts.build(post_params)
+    @post = Post.new(post_params)  # fill from the form
+    @post.user = current_user      # tie the post to whoever is logged in
+
     if @post.save
-      redirect_to @post, notice: "Post created successfully."
+      redirect_to posts_path, notice: "Post created successfully."
     else
-      render :new
+      render :new, status: :unprocessable_entity
     end
   end
 
